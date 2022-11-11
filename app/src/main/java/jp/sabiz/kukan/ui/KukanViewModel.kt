@@ -2,6 +2,8 @@ package jp.sabiz.kukan.ui
 
 import android.icu.text.SimpleDateFormat
 import android.location.Location
+import android.os.Handler
+import android.os.HandlerThread
 import android.os.SystemClock
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -24,7 +26,6 @@ class KukanViewModel : LocationListener, ViewModel() {
         private val Log = Logger.MAIN
         private const val MAX_LOCATION_INTERVAL_MILLIS = 10 * 60 * 1000
         private const val MIN_DISTANCE_METER = 5
-        private const val MIN_SPEED_KPH_OF_CALCULATE_AVERAGE = 5
     }
 
     private val state: MutableLiveData<KukanState> = MutableLiveData(KukanState.OFF)
@@ -36,6 +37,11 @@ class KukanViewModel : LocationListener, ViewModel() {
     private var averageKPHCount = 0L
     private var startTimeMillis = 0L
     private var startTimeEpochMillis = 0L
+    private val elapsedTimeMillis: Long
+    get() = SystemClock.elapsedRealtime() - startTimeMillis
+    private val locationList = mutableListOf<Location>()
+    private var updateHandler: Handler? = null
+    private var updateHandlerThread: HandlerThread? = null
 
     // For DEBUG
     var dbgMessage = MutableLiveData("")
@@ -65,10 +71,11 @@ class KukanViewModel : LocationListener, ViewModel() {
             if (it == KukanState.ON) {
                 startTimeEpochMillis = System.currentTimeMillis()
                 startTimeMillis = SystemClock.elapsedRealtime()
-                tripKm.value = 0f
-                averageKPHCount = 0
-                averageKPH.value = 0.0
-                time.value = ""
+                updateHandlerThread = HandlerThread("KukanUpdate").also { th ->
+                    th.start()
+                    updateHandler = Handler(th.looper)
+                    updateHandler?.postDelayed(this::updateLoop, 1000)
+                }
             } else {
                 viewModelScope.launch(Dispatchers.IO) {
                     val drive = Drive(
@@ -79,6 +86,17 @@ class KukanViewModel : LocationListener, ViewModel() {
                     )
                     val db = KukanDatabase.get()
                     db.driveDao().insert(drive)
+                    viewModelScope.launch(Dispatchers.Main) {
+                        tripKm.value = 0f
+                        averageKPHCount = 0
+                        averageKPH.value = 0.0
+                        time.value = ""
+                        locationList.clear()
+                    }
+                    updateHandler?.removeCallbacksAndMessages(null)
+                    updateHandlerThread?.quitSafely()
+                    updateHandler = null
+                    updateHandlerThread = null
                 }
             }
         }
@@ -87,32 +105,39 @@ class KukanViewModel : LocationListener, ViewModel() {
 
     override fun onLocation(location: Location) {
         dbgMessage.value = "acc:${location.accuracy}"
+        locationList.add(location)
+    }
 
-        if (lastLocation == null) {
-            lastLocation = location
+    private fun updateLoop() {
+        this.update()
+        updateHandler?.postDelayed(this::updateLoop, 1000)
+    }
+
+    private fun update() {
+        if (lastLocation == null && locationList.size > 0) {
+            lastLocation = locationList.removeFirst()
             return
         }
-        lastLocation?.let {
-            val elapsedMillis = location.getElapsedRealtimeMillis() - it.getElapsedRealtimeMillis()
-            if(elapsedMillis > MAX_LOCATION_INTERVAL_MILLIS) {
-                lastLocation = location
-                return
+        viewModelScope.launch(Dispatchers.Main) {
+            val last = lastLocation ?: return@launch
+            val new = locationList.removeFirstOrNull()
+            new?.let {
+                val elapsedMillis = it.getElapsedRealtimeMillis() - last.getElapsedRealtimeMillis()
+                if(elapsedMillis > MAX_LOCATION_INTERVAL_MILLIS) {
+                    lastLocation = it
+                    return@launch
+                }
+                val distance = last.distanceTo(it)
+                if (MIN_DISTANCE_METER > distance) {
+                    lastLocation = it
+                    return@launch
+                }
+                updateTrip(distance)
+                lastLocation = it
             }
 
-            val distance = it.distanceTo(location)
-            if (MIN_DISTANCE_METER > distance) {
-                lastLocation = location
-                return
-            }
-            updateTrip(distance)
-            updateAverageKPH(location.speed)
+            updateAverageKPH()
             updateTime()
-
-            dbgMessage.value = "acc:${location.accuracy} \n" +
-                                "distance: $distance \n" +
-                                "elapsedMillis: $elapsedMillis"
-            Log.i("${dbgMessage.value}")
-            lastLocation = location
         }
     }
 
@@ -122,20 +147,14 @@ class KukanViewModel : LocationListener, ViewModel() {
         }
     }
 
-    private fun updateAverageKPH(speedMPS: Float) {
-        val speedKPH = (speedMPS * 60.0 * 60.0 / 1000.0)
-        if (speedKPH < MIN_SPEED_KPH_OF_CALCULATE_AVERAGE) {
-            return
-        }
-        averageKPH.value?.let {
-            averageKPH.value = (averageKPHCount * it + speedKPH) / (averageKPHCount + 1)
-            averageKPHCount += 1
-        }
+    private fun updateAverageKPH() {
+        val trip = tripKm.value ?: return
+        val elapsed = elapsedTimeMillis / 1000.0 / 60.0 / 60.0
+        averageKPH.value = trip / elapsed
     }
 
     private fun updateTime() {
-        val current = SystemClock.elapsedRealtime()
-        val elapsed = current - startTimeMillis
+        val elapsed = elapsedTimeMillis
         val hour = TimeUnit.MILLISECONDS.toHours(elapsed)
         val min = TimeUnit.MILLISECONDS.toMinutes(elapsed - TimeUnit.HOURS.toMillis(hour))
         val sec = TimeUnit.MILLISECONDS.toSeconds(elapsed - TimeUnit.HOURS.toMillis(hour) - TimeUnit.MINUTES.toMillis(min))
