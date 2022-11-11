@@ -17,7 +17,7 @@ class KukanViewModel : LocationListener, ViewModel() {
         private val Log = Logger.MAIN
         private const val MAX_LOCATION_INTERVAL_MILLIS = 10 * 60 * 1000
         private const val MIN_DISTANCE_METER = 5
-//        private const val MIN_DISTANCE_METER = 0
+        private const val MIN_SPEED_KPH_OF_CALCULATE_AVERAGE = 5
     }
 
     private val state: MutableLiveData<KukanState> = MutableLiveData(KukanState.OFF)
@@ -32,7 +32,7 @@ class KukanViewModel : LocationListener, ViewModel() {
     // For DEBUG
     var dbgMessage = MutableLiveData("")
 
-    fun onClickButtonStart() {
+    fun onLongClickButtonStart(): Boolean {
         state.value = state.value?.toggle()
         Log.i("onClickButtonStart: ${state.value}")
         state.value?.let {
@@ -44,6 +44,7 @@ class KukanViewModel : LocationListener, ViewModel() {
                 time.value = ""
             }
         }
+        return true
     }
 
     override fun onLocation(location: Location) {
@@ -66,14 +67,12 @@ class KukanViewModel : LocationListener, ViewModel() {
                 return
             }
             updateTrip(distance)
-            updateAverageKPH(distance, elapsedMillis)
+            updateAverageKPH(location.speed)
             updateTime()
 
-            dbgMessage.value = "TRIP: ${tripKm.value}\n" +
-                                "distance: $distance \n" +
+            dbgMessage.value = "distance: $distance \n" +
                                 "elapsedMillis: $elapsedMillis \n" +
-                                "averageKPH: ${averageKPH.value} \n" +
-                                "time: ${time.value} \n"
+                                "averageKPH: ${averageKPH.value}"
             Log.i("${dbgMessage.value}")
             lastLocation = location
         }
@@ -85,11 +84,11 @@ class KukanViewModel : LocationListener, ViewModel() {
         }
     }
 
-    private fun updateAverageKPH(distanceM: Float, elapsedMillis: Long) {
-        val elapsedSec =elapsedMillis / 1000.0
-        val speedMPS = distanceM / elapsedSec
+    private fun updateAverageKPH(speedMPS: Float) {
         val speedKPH = (speedMPS * 60.0 * 60.0 / 1000.0)
-
+        if (speedKPH < MIN_SPEED_KPH_OF_CALCULATE_AVERAGE) {
+            return
+        }
         averageKPH.value?.let {
             averageKPH.value = (averageKPHCount * it + speedKPH) / (averageKPHCount + 1)
             averageKPHCount += 1

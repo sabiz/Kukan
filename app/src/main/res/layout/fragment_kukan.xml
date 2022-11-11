@@ -4,6 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+        <import type="jp.sabiz.kukan.common.KukanState" />
+        <import type="android.graphics.PorterDuff.Mode" />
         <variable
             name="viewModel"
             type="jp.sabiz.kukan.ui.KukanViewModel" />
@@ -13,61 +15,409 @@
         android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/colorPrimaryVariant"
         tools:context=".ui.KukanFragment">
 
-        <Button
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline_v_10"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintGuide_percent=".1"
+            android:orientation="vertical"/>
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline_v_90"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintGuide_percent=".9"
+            android:orientation="vertical"/>
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline_h_05"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintGuide_percent=".05"
+            android:orientation="horizontal"/>
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline_h_25"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintGuide_percent=".25"
+            android:orientation="horizontal"/>
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline_h_30"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintGuide_percent=".30"
+            android:orientation="horizontal"/>
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline_h_50"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintGuide_percent=".5"
+            android:orientation="horizontal"/>
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline_h_55"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintGuide_percent=".55"
+            android:orientation="horizontal"/>
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline_h_75"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintGuide_percent=".75"
+            android:orientation="horizontal"/>
+
+        <View
+            android:id="@+id/view_area_total_time"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="@drawable/rounded_shape_3dp"
+            app:layout_constraintStart_toStartOf="@+id/guideline_v_10"
+            app:layout_constraintEnd_toStartOf="@+id/guideline_v_90"
+            app:layout_constraintTop_toTopOf="@id/guideline_h_05"
+            app:layout_constraintBottom_toTopOf="@id/guideline_h_25"/>
+
+        <TextView
+            android:id="@+id/text_total_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="@id/view_area_total_time"
+            app:layout_constraintTop_toTopOf="@id/view_area_total_time"
+            android:text="Total time"
+            android:paddingTop="3dp"
+            android:paddingStart="5dp"
+            android:textSize="24sp"
+            android:textColor="@color/colorOnPrimary"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image_total_h2"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="3dp"
+            app:srcCompat="@drawable/lcd"
+            android:tint="@color/lcd_color"
+            app:imageTintMode="@{viewModel.kukanState == KukanState.ON ? Mode.SRC_IN : Mode.DST}"
+            app:imageLevel="@{viewModel.time.length() > 0 ? Integer.valueOf(viewModel.time.substring(0, 1)):0}"
+            app:layout_constraintTop_toBottomOf="@+id/text_total_time"
+            app:layout_constraintBottom_toBottomOf="@id/view_area_total_time"
+            app:layout_constraintStart_toStartOf="@id/view_area_total_time"
+            app:layout_constraintEnd_toStartOf="@id/image_total_h1"/>
+
+
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image_total_h1"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginEnd="3dp"
+            app:srcCompat="@drawable/lcd"
+            android:tint="@color/lcd_color"
+            app:imageTintMode="@{viewModel.kukanState == KukanState.ON ? Mode.SRC_IN : Mode.DST}"
+            app:imageLevel="@{viewModel.time.length() > 0 ? Integer.valueOf(viewModel.time.substring(1, 2)):0}"
+            app:layout_constraintTop_toBottomOf="@+id/text_total_time"
+            app:layout_constraintBottom_toBottomOf="@id/view_area_total_time"
+            app:layout_constraintStart_toEndOf="@id/image_total_h2"
+            app:layout_constraintEnd_toStartOf="@id/image_total_h_colon"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image_total_h_colon"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:srcCompat="@drawable/lcd_colon"
+            android:tint="@color/lcd_color"
+            app:imageTintMode="@{viewModel.kukanState == KukanState.ON ? Mode.SRC_IN : Mode.DST}"
+            app:layout_constraintTop_toBottomOf="@+id/text_total_time"
+            app:layout_constraintBottom_toBottomOf="@id/view_area_total_time"
+            app:layout_constraintStart_toEndOf="@id/image_total_h1"
+            app:layout_constraintEnd_toStartOf="@id/image_total_m2"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image_total_m2"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginEnd="3dp"
+            app:srcCompat="@drawable/lcd"
+            android:tint="@color/lcd_color"
+            app:imageTintMode="@{viewModel.kukanState == KukanState.ON ? Mode.SRC_IN : Mode.DST}"
+            app:imageLevel="@{viewModel.time.length() > 0 ? Integer.valueOf(viewModel.time.substring(3, 4)):0}"
+            app:layout_constraintTop_toBottomOf="@+id/text_total_time"
+            app:layout_constraintBottom_toBottomOf="@id/view_area_total_time"
+            app:layout_constraintStart_toEndOf="@id/image_total_h_colon"
+            app:layout_constraintEnd_toStartOf="@id/image_total_m1"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image_total_m1"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginEnd="3dp"
+            app:srcCompat="@drawable/lcd"
+            android:tint="@color/lcd_color"
+            app:imageTintMode="@{viewModel.kukanState == KukanState.ON ? Mode.SRC_IN : Mode.DST}"
+            app:imageLevel="@{viewModel.time.length() > 0 ? Integer.valueOf(viewModel.time.substring(4, 5)):0}"
+            app:layout_constraintTop_toBottomOf="@+id/text_total_time"
+            app:layout_constraintBottom_toBottomOf="@id/view_area_total_time"
+            app:layout_constraintStart_toEndOf="@id/image_total_m2"
+            app:layout_constraintEnd_toStartOf="@id/image_total_m_colon"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image_total_m_colon"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:srcCompat="@drawable/lcd_colon"
+            android:tint="@color/lcd_color"
+            app:imageTintMode="@{viewModel.kukanState == KukanState.ON ? Mode.SRC_IN : Mode.DST}"
+            app:layout_constraintTop_toBottomOf="@+id/text_total_time"
+            app:layout_constraintBottom_toBottomOf="@id/view_area_total_time"
+            app:layout_constraintStart_toEndOf="@id/image_total_m1"
+            app:layout_constraintEnd_toStartOf="@id/image_total_s2"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image_total_s2"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginEnd="3dp"
+            app:srcCompat="@drawable/lcd"
+            android:tint="@color/lcd_color"
+            app:imageTintMode="@{viewModel.kukanState == KukanState.ON ? Mode.SRC_IN : Mode.DST}"
+            app:imageLevel="@{viewModel.time.length() > 0 ? Integer.valueOf(viewModel.time.substring(6, 7)):0}"
+            app:layout_constraintTop_toBottomOf="@+id/text_total_time"
+            app:layout_constraintBottom_toBottomOf="@id/view_area_total_time"
+            app:layout_constraintStart_toEndOf="@id/image_total_m_colon"
+            app:layout_constraintEnd_toStartOf="@id/image_total_s1"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image_total_s1"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginEnd="5dp"
+            app:srcCompat="@drawable/lcd"
+            android:tint="@color/lcd_color"
+            app:imageTintMode="@{viewModel.kukanState == KukanState.ON ? Mode.SRC_IN : Mode.DST}"
+            app:imageLevel="@{viewModel.time.length() > 0 ? Integer.valueOf(viewModel.time.substring(7, 8)):0}"
+            app:layout_constraintTop_toBottomOf="@+id/text_total_time"
+            app:layout_constraintBottom_toBottomOf="@id/view_area_total_time"
+            app:layout_constraintStart_toEndOf="@id/image_total_s2"
+            app:layout_constraintEnd_toEndOf="@id/view_area_total_time"/>
+
+        <View
+            android:id="@+id/view_area_trip"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="@drawable/rounded_shape_3dp"
+            app:layout_constraintStart_toStartOf="@+id/guideline_v_10"
+            app:layout_constraintEnd_toStartOf="@+id/guideline_v_90"
+            app:layout_constraintTop_toTopOf="@id/guideline_h_30"
+            app:layout_constraintBottom_toTopOf="@id/guideline_h_50"/>
+
+        <TextView
+            android:id="@+id/text_trip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="@id/view_area_trip"
+            app:layout_constraintTop_toTopOf="@id/view_area_trip"
+            android:text="TRIP"
+            android:paddingTop="3dp"
+            android:paddingStart="5dp"
+            android:textSize="24sp"
+            android:textColor="@color/colorOnPrimary"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image_trip_3"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="3dp"
+            app:srcCompat="@drawable/lcd"
+            android:tint="@color/lcd_color"
+            app:imageTintMode="@{viewModel.kukanState == KukanState.ON ? Mode.SRC_IN : Mode.DST}"
+            app:imageLevel='@{Integer.valueOf(String.format("%05.1f", viewModel.tripKm).substring(0, 1))}'
+            app:layout_constraintTop_toBottomOf="@+id/text_trip"
+            app:layout_constraintBottom_toBottomOf="@id/view_area_trip"
+            app:layout_constraintStart_toStartOf="@id/text_trip"
+            app:layout_constraintEnd_toStartOf="@id/image_trip_2"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image_trip_2"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="3dp"
+            app:srcCompat="@drawable/lcd"
+            android:tint="@color/lcd_color"
+            app:imageTintMode="@{viewModel.kukanState == KukanState.ON ? Mode.SRC_IN : Mode.DST}"
+            app:imageLevel='@{Integer.valueOf(String.format("%05.1f", viewModel.tripKm).substring(1, 2))}'
+            app:layout_constraintTop_toBottomOf="@+id/text_trip"
+            app:layout_constraintBottom_toBottomOf="@id/view_area_trip"
+            app:layout_constraintStart_toEndOf="@id/image_trip_3"
+            app:layout_constraintEnd_toStartOf="@id/image_trip_1"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image_trip_1"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="3dp"
+            app:srcCompat="@drawable/lcd"
+            android:tint="@color/lcd_color"
+            app:imageTintMode="@{viewModel.kukanState == KukanState.ON ? Mode.SRC_IN : Mode.DST}"
+            app:imageLevel='@{Integer.valueOf(String.format("%05.1f", viewModel.tripKm).substring(2, 3))}'
+            app:layout_constraintTop_toBottomOf="@+id/text_trip"
+            app:layout_constraintBottom_toBottomOf="@id/view_area_trip"
+            app:layout_constraintStart_toEndOf="@id/image_trip_2"
+            app:layout_constraintEnd_toStartOf="@id/image_trip_dot"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image_trip_dot"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="3dp"
+            app:srcCompat="@drawable/lcd_dot"
+            android:tint="@color/lcd_color"
+            app:imageTintMode="@{viewModel.kukanState == KukanState.ON ? Mode.SRC_IN : Mode.DST}"
+            app:layout_constraintTop_toBottomOf="@+id/text_trip"
+            app:layout_constraintBottom_toBottomOf="@id/view_area_trip"
+            app:layout_constraintStart_toEndOf="@id/image_trip_1"
+            app:layout_constraintEnd_toStartOf="@id/image_trip_d1"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image_trip_d1"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="10dp"
+            app:srcCompat="@drawable/lcd"
+            android:tint="@color/lcd_color"
+            app:imageTintMode="@{viewModel.kukanState == KukanState.ON ? Mode.SRC_IN : Mode.DST}"
+            app:imageLevel='@{Integer.valueOf(String.format("%05.1f", viewModel.tripKm).substring(4))}'
+            app:layout_constraintTop_toBottomOf="@+id/text_trip"
+            app:layout_constraintBottom_toBottomOf="@id/view_area_trip"
+            app:layout_constraintStart_toEndOf="@id/image_trip_dot"
+            app:layout_constraintEnd_toEndOf="@id/view_area_trip"/>
+
+        <View
+            android:id="@+id/view_area_avg_kph"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="@drawable/rounded_shape_3dp"
+            app:layout_constraintStart_toStartOf="@+id/guideline_v_10"
+            app:layout_constraintEnd_toStartOf="@+id/guideline_v_90"
+            app:layout_constraintTop_toTopOf="@id/guideline_h_55"
+            app:layout_constraintBottom_toTopOf="@id/guideline_h_75"/>
+
+        <TextView
+            android:id="@+id/text_avg_kph"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="@id/view_area_avg_kph"
+            app:layout_constraintTop_toTopOf="@id/view_area_avg_kph"
+            android:text="AVG Km/h"
+            android:paddingTop="3dp"
+            android:paddingStart="5dp"
+            android:textSize="24sp"
+            android:textColor="@color/colorOnPrimary"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image_avg_kph_3"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="3dp"
+            app:srcCompat="@drawable/lcd"
+            android:tint="@color/lcd_color"
+            app:imageTintMode="@{viewModel.kukanState == KukanState.ON ? Mode.SRC_IN : Mode.DST}"
+            app:imageLevel='@{Integer.valueOf(String.format("%05.1f", viewModel.averageKPH).substring(0, 1))}'
+            app:layout_constraintTop_toBottomOf="@+id/text_avg_kph"
+            app:layout_constraintBottom_toBottomOf="@id/view_area_avg_kph"
+            app:layout_constraintStart_toStartOf="@id/text_avg_kph"
+            app:layout_constraintEnd_toStartOf="@id/image_avg_kph_2"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image_avg_kph_2"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="3dp"
+            app:srcCompat="@drawable/lcd"
+            android:tint="@color/lcd_color"
+            app:imageTintMode="@{viewModel.kukanState == KukanState.ON ? Mode.SRC_IN : Mode.DST}"
+            app:imageLevel='@{Integer.valueOf(String.format("%05.1f", viewModel.averageKPH).substring(0, 1))}'
+            app:layout_constraintTop_toBottomOf="@+id/text_avg_kph"
+            app:layout_constraintBottom_toBottomOf="@id/view_area_avg_kph"
+            app:layout_constraintStart_toEndOf="@id/image_avg_kph_3"
+            app:layout_constraintEnd_toStartOf="@id/image_avg_kph_1"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image_avg_kph_1"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="3dp"
+            app:srcCompat="@drawable/lcd"
+            android:tint="@color/lcd_color"
+            app:imageTintMode="@{viewModel.kukanState == KukanState.ON ? Mode.SRC_IN : Mode.DST}"
+            app:imageLevel='@{Integer.valueOf(String.format("%05.1f", viewModel.averageKPH).substring(0, 1))}'
+            app:layout_constraintTop_toBottomOf="@+id/text_avg_kph"
+            app:layout_constraintBottom_toBottomOf="@id/view_area_avg_kph"
+            app:layout_constraintStart_toEndOf="@id/image_avg_kph_2"
+            app:layout_constraintEnd_toStartOf="@id/image_avg_kph_dot"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image_avg_kph_dot"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="3dp"
+            app:srcCompat="@drawable/lcd_dot"
+            android:tint="@color/lcd_color"
+            app:imageTintMode="@{viewModel.kukanState == KukanState.ON ? Mode.SRC_IN : Mode.DST}"
+            app:layout_constraintTop_toBottomOf="@+id/text_avg_kph"
+            app:layout_constraintBottom_toBottomOf="@id/view_area_avg_kph"
+            app:layout_constraintStart_toEndOf="@id/image_avg_kph_1"
+            app:layout_constraintEnd_toStartOf="@id/image_avg_kph_d1"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image_avg_kph_d1"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            app:srcCompat="@drawable/lcd"
+            android:tint="@color/lcd_color"
+            app:imageTintMode="@{viewModel.kukanState == KukanState.ON ? Mode.SRC_IN : Mode.DST}"
+            app:imageLevel='@{Integer.valueOf(String.format("%05.1f", viewModel.averageKPH).substring(0, 1))}'
+            app:layout_constraintTop_toBottomOf="@+id/text_avg_kph"
+            app:layout_constraintBottom_toBottomOf="@id/view_area_avg_kph"
+            app:layout_constraintStart_toEndOf="@id/image_avg_kph_dot"
+            app:layout_constraintEnd_toEndOf="@id/view_area_avg_kph"/>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/button_start"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Button"
-            android:onClick="@{() -> viewModel.onClickButtonStart()}"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_marginTop="32dp"
+            android:onLongClick="@{() -> viewModel.onLongClickButtonStart()}"
+            app:layout_constraintTop_toBottomOf="@id/view_area_avg_kph"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintEnd_toEndOf="parent"/>
 
         <TextView
-            android:id="@+id/textView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text='@{String.format("TRIP: %.1f", viewModel.tripKm)}'
-            android:textSize="48sp"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:text="ON/OFF"
+            android:textColor="@color/colorOnPrimary"
+            app:layout_constraintTop_toBottomOf="@id/button_start"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/button_start" />
-
-        <TextView
-            android:id="@+id/textView2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text='@{String.format("μ Km/h: %.1f", viewModel.averageKPH)}'
-            android:textSize="48sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView" />
-
-        <TextView
-            android:id="@+id/textView3"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text='@{"Time: " + viewModel.time}'
-            android:textSize="48sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView2"/>
-
-        <TextView
-            android:id="@+id/textView5"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text='@{viewModel.kukanState.name()}'
-            android:textSize="48sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView3"/>
+            />
 
         <TextView
             android:id="@+id/textView6"
@@ -80,6 +430,6 @@
             android:maxLines="30"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView5"/>
+            app:layout_constraintTop_toBottomOf="@+id/button_start"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
