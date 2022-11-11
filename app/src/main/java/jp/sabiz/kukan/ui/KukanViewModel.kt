@@ -1,14 +1,21 @@
 package jp.sabiz.kukan.ui
 
+import android.icu.text.SimpleDateFormat
 import android.location.Location
 import android.os.SystemClock
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import jp.sabiz.kukan.common.KukanState
 import jp.sabiz.kukan.common.Logger
+import jp.sabiz.kukan.data.KukanDatabase
+import jp.sabiz.kukan.data.entities.Drive
 import jp.sabiz.kukan.extension.getElapsedRealtimeMillis
 import jp.sabiz.kukan.location.LocationListener
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 class KukanViewModel : LocationListener, ViewModel() {
@@ -28,20 +35,51 @@ class KukanViewModel : LocationListener, ViewModel() {
     private var lastLocation: Location? = null
     private var averageKPHCount = 0L
     private var startTimeMillis = 0L
+    private var startTimeEpochMillis = 0L
 
     // For DEBUG
     var dbgMessage = MutableLiveData("")
+    var kukanData = MutableLiveData("")
+
+    fun loadDb() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val db = KukanDatabase.get()
+            val drivers = db.driveDao().getAll()
+            var resultText = ""
+            val format = SimpleDateFormat("yyyy/MM/dd hh:mm", Locale.JAPAN)
+
+            drivers.forEach {
+                resultText += "${format.format(Date(it.time))}, ${it.totalTime}, ${"%05.1f".format(it.trip)}, ${"%05.1f".format(it.avgKph)}\n"
+            }
+
+            viewModelScope.launch {
+                kukanData.value = resultText
+            }
+        }
+    }
 
     fun onLongClickButtonStart(): Boolean {
         state.value = state.value?.toggle()
         Log.i("onClickButtonStart: ${state.value}")
         state.value?.let {
             if (it == KukanState.ON) {
+                startTimeEpochMillis = System.currentTimeMillis()
                 startTimeMillis = SystemClock.elapsedRealtime()
                 tripKm.value = 0f
                 averageKPHCount = 0
                 averageKPH.value = 0.0
                 time.value = ""
+            } else {
+                viewModelScope.launch(Dispatchers.IO) {
+                    val drive = Drive(
+                        startTimeEpochMillis,
+                        time.value?: "",
+                        tripKm.value?.toDouble()?: 0.0,
+                        averageKPH.value?: 0.0
+                    )
+                    val db = KukanDatabase.get()
+                    db.driveDao().insert(drive)
+                }
             }
         }
         return true
@@ -70,9 +108,9 @@ class KukanViewModel : LocationListener, ViewModel() {
             updateAverageKPH(location.speed)
             updateTime()
 
-            dbgMessage.value = "distance: $distance \n" +
-                                "elapsedMillis: $elapsedMillis \n" +
-                                "averageKPH: ${averageKPH.value}"
+            dbgMessage.value = "acc:${location.accuracy} \n" +
+                                "distance: $distance \n" +
+                                "elapsedMillis: $elapsedMillis"
             Log.i("${dbgMessage.value}")
             lastLocation = location
         }

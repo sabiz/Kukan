@@ -29,6 +29,7 @@ class KukanFragment : Fragment() {
             registerForActivityResult((ActivityResultContracts.RequestMultiplePermissions()), PermissionChecker.get()::activityResultCallback)
         )
         kukanViewModel = ViewModelProvider(this)[KukanViewModel::class.java]
+        kukanViewModel.loadDb()
     }
 
     override fun onCreateView(
