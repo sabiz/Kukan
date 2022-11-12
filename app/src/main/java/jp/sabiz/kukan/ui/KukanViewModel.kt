@@ -2,8 +2,6 @@ package jp.sabiz.kukan.ui
 
 import android.icu.text.SimpleDateFormat
 import android.location.Location
-import android.os.Handler
-import android.os.HandlerThread
 import android.os.SystemClock
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -16,8 +14,11 @@ import jp.sabiz.kukan.data.entities.Drive
 import jp.sabiz.kukan.extension.getElapsedRealtimeMillis
 import jp.sabiz.kukan.location.LocationListener
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.*
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 class KukanViewModel : LocationListener, ViewModel() {
@@ -40,8 +41,7 @@ class KukanViewModel : LocationListener, ViewModel() {
     private val elapsedTimeMillis: Long
     get() = SystemClock.elapsedRealtime() - startTimeMillis
     private val locationList = mutableListOf<Location>()
-    private var updateHandler: Handler? = null
-    private var updateHandlerThread: HandlerThread? = null
+    private val updateCoroutineDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
     // For DEBUG
     var dbgMessage = MutableLiveData("")
@@ -71,10 +71,8 @@ class KukanViewModel : LocationListener, ViewModel() {
             if (it == KukanState.ON) {
                 startTimeEpochMillis = System.currentTimeMillis()
                 startTimeMillis = SystemClock.elapsedRealtime()
-                updateHandlerThread = HandlerThread("KukanUpdate").also { th ->
-                    th.start()
-                    updateHandler = Handler(th.looper)
-                    updateHandler?.postDelayed(this::updateLoop, 1000)
+                viewModelScope.launch(updateCoroutineDispatcher){
+                   updateLoop()
                 }
             } else {
                 viewModelScope.launch(Dispatchers.IO) {
@@ -93,10 +91,6 @@ class KukanViewModel : LocationListener, ViewModel() {
                         time.value = ""
                         locationList.clear()
                     }
-                    updateHandler?.removeCallbacksAndMessages(null)
-                    updateHandlerThread?.quitSafely()
-                    updateHandler = null
-                    updateHandlerThread = null
                 }
             }
         }
@@ -108,34 +102,36 @@ class KukanViewModel : LocationListener, ViewModel() {
         locationList.add(location)
     }
 
-    private fun updateLoop() {
-        this.update()
-        updateHandler?.postDelayed(this::updateLoop, 1000)
+    private suspend fun updateLoop() {
+        while (true) {
+            if ((state.value ?: KukanState.OFF) == KukanState.ON) {
+                val before = SystemClock.elapsedRealtime()
+                update()
+                val after = SystemClock.elapsedRealtime()
+                Log.d("Wait: ${1000 - (after - before)}")
+                Thread.sleep(1000 - (after - before))
+            }
+        }
     }
 
-    private fun update() {
+    private suspend fun update() {
         if (lastLocation == null && locationList.size > 0) {
             lastLocation = locationList.removeFirst()
             return
         }
-        viewModelScope.launch(Dispatchers.Main) {
-            val last = lastLocation ?: return@launch
-            val new = locationList.removeFirstOrNull()
-            new?.let {
-                val elapsedMillis = it.getElapsedRealtimeMillis() - last.getElapsedRealtimeMillis()
-                if(elapsedMillis > MAX_LOCATION_INTERVAL_MILLIS) {
-                    lastLocation = it
-                    return@launch
-                }
-                val distance = last.distanceTo(it)
-                if (MIN_DISTANCE_METER > distance) {
-                    lastLocation = it
-                    return@launch
-                }
+        val last = lastLocation ?: return
+        val new = locationList.removeFirstOrNull()?:
+                    withContext(viewModelScope.coroutineContext + Dispatchers.Main) {updateTime()}.let { return }
+        val elapsedMillis = new.getElapsedRealtimeMillis() - last.getElapsedRealtimeMillis()
+        lastLocation = new
+        if(elapsedMillis > MAX_LOCATION_INTERVAL_MILLIS) {
+            return
+        }
+        val distance = last.distanceTo(new)
+        withContext(viewModelScope.coroutineContext + Dispatchers.Main) {
+            if (MIN_DISTANCE_METER <= distance) {
                 updateTrip(distance)
-                lastLocation = it
             }
-
             updateAverageKPH()
             updateTime()
         }
