@@ -1,14 +1,17 @@
 package jp.sabiz.kukan.ui
 
+import android.animation.ValueAnimator
 import android.icu.text.SimpleDateFormat
 import android.location.Location
 import android.os.SystemClock
+import android.view.animation.LinearInterpolator
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import jp.sabiz.kukan.common.KukanState
 import jp.sabiz.kukan.common.Logger
+import jp.sabiz.kukan.common.LongTouchEventDetector
 import jp.sabiz.kukan.data.KukanDatabase
 import jp.sabiz.kukan.data.entities.Drive
 import jp.sabiz.kukan.extension.getElapsedRealtimeMillis
@@ -21,12 +24,15 @@ import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-class KukanViewModel : LocationListener, ViewModel() {
+
+class KukanViewModel : LocationListener, ViewModel(),
+    LongTouchEventDetector.OnLongTouchEventListener {
 
     companion object {
         private val Log = Logger.MAIN
         private const val MAX_LOCATION_INTERVAL_MILLIS = 10 * 60 * 1000
         private const val MIN_DISTANCE_METER = 5
+        private const val ON_OFF_LONG_TOUCH_TIME_MILLIS = 2000L
     }
 
     private val state: MutableLiveData<KukanState> = MutableLiveData(KukanState.OFF)
@@ -34,6 +40,8 @@ class KukanViewModel : LocationListener, ViewModel() {
     var tripKm = MutableLiveData(0f)
     var averageKPH = MutableLiveData(0.0)
     var time = MutableLiveData("")
+    var progressOnOff = MutableLiveData(0)
+    val longTouchEventDetector = LongTouchEventDetector(ON_OFF_LONG_TOUCH_TIME_MILLIS, this)
     private var lastLocation: Location? = null
     private var averageKPHCount = 0L
     private var startTimeMillis = 0L
@@ -42,6 +50,15 @@ class KukanViewModel : LocationListener, ViewModel() {
     get() = SystemClock.elapsedRealtime() - startTimeMillis
     private val locationList = mutableListOf<Location>()
     private val updateCoroutineDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    private val progressOnOffAnimator: ValueAnimator by lazy {
+        val  animator = ValueAnimator.ofInt(0, 100)
+        animator.duration = ON_OFF_LONG_TOUCH_TIME_MILLIS
+        animator.interpolator = LinearInterpolator()
+        animator.addUpdateListener {
+            progressOnOff.value = it.animatedValue as Int
+        }
+        return@lazy animator
+    }
 
     // For DEBUG
     var dbgMessage = MutableLiveData("")
@@ -64,42 +81,58 @@ class KukanViewModel : LocationListener, ViewModel() {
         }
     }
 
-    fun onLongClickButtonStart(): Boolean {
-        state.value = state.value?.toggle()
-        Log.i("onClickButtonStart: ${state.value}")
-        state.value?.let {
-            if (it == KukanState.ON) {
-                startTimeEpochMillis = System.currentTimeMillis()
-                startTimeMillis = SystemClock.elapsedRealtime()
-                viewModelScope.launch(updateCoroutineDispatcher){
-                   updateLoop()
-                }
-            } else {
-                viewModelScope.launch(Dispatchers.IO) {
-                    val drive = Drive(
-                        startTimeEpochMillis,
-                        time.value?: "",
-                        tripKm.value?.toDouble()?: 0.0,
-                        averageKPH.value?: 0.0
-                    )
-                    val db = KukanDatabase.get()
-                    db.driveDao().insert(drive)
-                    viewModelScope.launch(Dispatchers.Main) {
-                        tripKm.value = 0f
-                        averageKPHCount = 0
-                        averageKPH.value = 0.0
-                        time.value = ""
-                        locationList.clear()
-                    }
-                }
-            }
-        }
-        return true
-    }
-
     override fun onLocation(location: Location) {
         dbgMessage.value = "acc:${location.accuracy}"
         locationList.add(location)
+    }
+
+    override fun onLongTouchDown() {
+        Log.d("TOUCH DOWN")
+        state.value?: return
+        if (state.value == KukanState.OFF) {
+            progressOnOff.value = 0
+            progressOnOffAnimator.start()
+        } else if (state.value == KukanState.ON) {
+            progressOnOff.value = 100
+            progressOnOffAnimator.reverse()
+        }
+    }
+
+    override fun onLongTouchCanceled() {
+        Log.d("TOUCH CANCELED")
+        progressOnOffAnimator.reverse()
+    }
+
+    override fun onLongTouchUp() {
+        Log.d("TOUCH UP")
+        state.value?: return
+        state.value = state.value?.toggle()
+        Log.i("long touch: ${state.value}")
+        if (state.value == KukanState.ON) {
+            startTimeEpochMillis = System.currentTimeMillis()
+            startTimeMillis = SystemClock.elapsedRealtime()
+            viewModelScope.launch(updateCoroutineDispatcher){
+                updateLoop()
+            }
+        } else {
+            viewModelScope.launch(Dispatchers.IO) {
+                val drive = Drive(
+                    startTimeEpochMillis,
+                    time.value?: "",
+                    tripKm.value?.toDouble()?: 0.0,
+                    averageKPH.value?: 0.0
+                )
+                val db = KukanDatabase.get()
+                db.driveDao().insert(drive)
+                viewModelScope.launch(Dispatchers.Main) {
+                    tripKm.value = 0f
+                    averageKPHCount = 0
+                    averageKPH.value = 0.0
+                    time.value = ""
+                    locationList.clear()
+                }
+            }
+        }
     }
 
     private suspend fun updateLoop() {

@@ -1,13 +1,17 @@
 package jp.sabiz.kukan.ui
 
+import android.animation.ObjectAnimator
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ProgressBar
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import com.google.android.material.progressindicator.CircularProgressIndicator
 import jp.sabiz.kukan.R
 import jp.sabiz.kukan.common.KukanState
 import jp.sabiz.kukan.common.PermissionChecker
@@ -32,6 +36,7 @@ class KukanFragment : Fragment() {
         kukanViewModel.loadDb()
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -39,6 +44,8 @@ class KukanFragment : Fragment() {
         _binding = DataBindingUtil.inflate(inflater, R.layout.fragment_kukan, container, false)
         _binding.viewModel = kukanViewModel
         _binding.lifecycleOwner = this
+        val progress:ProgressBar = _binding.main.requireViewById(R.id.progress_on_off)
+        progress.setOnTouchListener(kukanViewModel.longTouchEventDetector)
         return _binding.main
     }
 

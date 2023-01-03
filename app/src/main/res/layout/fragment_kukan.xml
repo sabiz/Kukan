@@ -386,24 +386,20 @@
             app:layout_constraintStart_toEndOf="@id/image_avg_kph_dot"
             app:layout_constraintEnd_toEndOf="@id/view_area_avg_kph"/>
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/button_start"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
+        <ProgressBar
+            android:id="@+id/progress_on_off"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
             android:layout_marginTop="48dp"
-            android:onLongClick="@{() -> viewModel.onLongClickButtonStart()}"
             app:layout_constraintTop_toBottomOf="@id/view_area_avg_kph"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ON/OFF"
-            android:textColor="@color/colorOnPrimary"
-            app:layout_constraintTop_toBottomOf="@id/button_start"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:background="@drawable/bg_on_off_progress"
+            android:progressDrawable="@drawable/fg_on_off_progress"
+            android:progressTint="@color/lcd_color"
+            android:progressTintMode="@{viewModel.kukanState == KukanState.ON ? Mode.SRC_IN : Mode.DST}"
+            android:progress="@{viewModel.progressOnOff}"
             />
 
         <TextView
@@ -417,14 +413,14 @@
             android:maxLines="30"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/button_start"/>
+            app:layout_constraintTop_toBottomOf="@+id/progress_on_off"/>
 
         <ScrollView
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_margin="5dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/button_start"
+            app:layout_constraintEnd_toStartOf="@id/progress_on_off"
             app:layout_constraintTop_toBottomOf="@id/view_area_avg_kph"
             app:layout_constraintBottom_toBottomOf="parent">
             <TextView
