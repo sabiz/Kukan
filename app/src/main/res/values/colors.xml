@@ -9,6 +9,7 @@
     <color name="colorSecondaryVariant">#D6E4E5</color>
 
     <color name="lcd_color">#DA0037</color>
+    <color name="lcd_color_off">#292929</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 </resources>
