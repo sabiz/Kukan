@@ -16,6 +16,7 @@ import jp.sabiz.kukan.common.LongTouchEventDetector
 import jp.sabiz.kukan.data.KukanDatabase
 import jp.sabiz.kukan.data.dao.DriveDao
 import jp.sabiz.kukan.data.entities.Drive
+import jp.sabiz.kukan.extension.getElapsedRealtimeMillisCompat
 import jp.sabiz.kukan.location.LocationListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -180,7 +181,7 @@ class KukanViewModel : LocationListener, ViewModel(),
         val last = lastLocation ?: return
         val new = locationList.removeFirstOrNull()?:
                     withContext(viewModelScope.coroutineContext + Dispatchers.Main) {updateTime()}.let { return }
-        val elapsedMillis = new.getElapsedRealtimeMillis() - last.getElapsedRealtimeMillis()
+        val elapsedMillis = new.getElapsedRealtimeMillisCompat() - last.getElapsedRealtimeMillisCompat()
         lastLocation = new
         if(elapsedMillis > MAX_LOCATION_INTERVAL_MILLIS) {
             return
