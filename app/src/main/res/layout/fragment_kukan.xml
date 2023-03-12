@@ -402,6 +402,20 @@
             android:progress="@{viewModel.progressOnOff}"
             />
 
+        <ImageButton
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            app:layout_constraintBottom_toBottomOf="@+id/progress_on_off"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/progress_on_off"
+            android:background="@android:color/transparent"
+            android:src="@drawable/upload"
+            app:tint="@color/lcd_color_off"
+            android:tintMode="@{viewModel.kukanState == KukanState.ON ? Mode.SRC_IN: Mode.DST}"
+            android:onClick="@{() -> viewModel.onClickUpload()}"
+            android:clickable="@{viewModel.kukanState == KukanState.ON ? false: true}"
+             />
+
         <TextView
             android:id="@+id/textView6"
             android:layout_width="wrap_content"

@@ -9,12 +9,13 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.hadilq.liveevent.LiveEvent
 import jp.sabiz.kukan.common.KukanState
 import jp.sabiz.kukan.common.Logger
 import jp.sabiz.kukan.common.LongTouchEventDetector
 import jp.sabiz.kukan.data.KukanDatabase
+import jp.sabiz.kukan.data.dao.DriveDao
 import jp.sabiz.kukan.data.entities.Drive
-import jp.sabiz.kukan.extension.getElapsedRealtimeMillis
 import jp.sabiz.kukan.location.LocationListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -36,12 +37,16 @@ class KukanViewModel : LocationListener, ViewModel(),
     }
 
     private val state: MutableLiveData<KukanState> = MutableLiveData(KukanState.OFF)
+    private val clickUploadState = LiveEvent<Boolean>()
+    private val uploadStandbyData = LiveEvent<String>()
     val kukanState: LiveData<KukanState> = state
-    var tripKm = MutableLiveData(0f)
-    var averageKPH = MutableLiveData(0.0)
-    var time = MutableLiveData("")
-    var progressOnOff = MutableLiveData(0)
+    val tripKm = MutableLiveData(0f)
+    val averageKPH = MutableLiveData(0.0)
+    val time = MutableLiveData("")
+    val progressOnOff = MutableLiveData(0)
     val longTouchEventDetector = LongTouchEventDetector(ON_OFF_LONG_TOUCH_TIME_MILLIS, this)
+    val isClickUpload: LiveData<Boolean> = clickUploadState
+    val uploadData: LiveData<String> = uploadStandbyData
     private var lastLocation: Location? = null
     private var averageKPHCount = 0L
     private var startTimeMillis = 0L
@@ -78,6 +83,26 @@ class KukanViewModel : LocationListener, ViewModel(),
             viewModelScope.launch {
                 kukanData.value = resultText
             }
+        }
+    }
+
+    fun onClickUpload() {
+        clickUploadState.value = true
+        viewModelScope.launch(Dispatchers.IO) {
+            Thread.sleep(1500)
+            val db = KukanDatabase.get()
+            val csvData = db.driveDao().getAllAsCsv().joinToString(
+                                                            separator = System.lineSeparator(),
+                                                            prefix = "${DriveDao.CSV_HEADER}${System.lineSeparator()}")
+            viewModelScope.launch {
+                uploadStandbyData.value = csvData
+            }
+        }
+    }
+
+    fun clearData() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val db = KukanDatabase.get().driveDao().deleteAll()
         }
     }
 
