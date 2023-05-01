@@ -26,14 +26,16 @@ class Kiosk(private val context:Context) {
         }
     }
 
-    fun setLockTaskPackage() =
+    fun setLockTaskPackage() {
+        devicePolicyManager.setLocationEnabled(deviceAdmin, true)
         devicePolicyManager.setLockTaskPackages(deviceAdmin, arrayOf(context.packageName))
+    }
 
-    fun hasDeviceOwnerPermission() =
+    private fun hasDeviceOwnerPermission() =
         devicePolicyManager.isAdminActive(deviceAdmin) &&
                 devicePolicyManager.isDeviceOwnerApp(context.packageName)
 
-    fun addHomeActivity(activity: Activity) {
+    private fun addHomeActivity(activity: Activity) {
         val intentFilter = IntentFilter(Intent.ACTION_MAIN).apply {
             addCategory(Intent.CATEGORY_DEFAULT)
             addCategory(Intent.CATEGORY_HOME)

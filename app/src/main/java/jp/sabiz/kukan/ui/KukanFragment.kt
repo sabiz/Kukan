@@ -19,6 +19,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.material.snackbar.Snackbar
 import com.techiness.progressdialoglibrary.ProgressDialog
 import jp.sabiz.kukan.R
+import jp.sabiz.kukan.common.Kiosk
 import jp.sabiz.kukan.common.KukanState
 import jp.sabiz.kukan.common.Logger
 import jp.sabiz.kukan.common.PermissionChecker
@@ -62,8 +63,10 @@ class KukanFragment : Fragment() {
     private val kukanStateObserver: Observer<KukanState> = Observer {
         if (it == KukanState.ON) {
             LocationProvider.get().requestRepeat(requireContext(), kukanViewModel)
+            Kiosk(requireContext()).start(requireActivity())
         } else if (it == KukanState.OFF) {
             LocationProvider.get().stopRepeat(requireContext())
+            Kiosk(requireContext()).stop(requireActivity())
         }
     }
     private val isClickUploadObserver: Observer<Boolean> = Observer {

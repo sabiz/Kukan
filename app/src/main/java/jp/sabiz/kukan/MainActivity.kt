@@ -26,6 +26,5 @@ class MainActivity : AppCompatActivity() {
         )
         window.insetsController?.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 
-        Kiosk(this).start(this)
     }
 }
